@@ -1,0 +1,12 @@
+{
+  "Author": "Lulu Yunalesca",
+  "Name": "Achievement Viewer",
+  "Punchline": "",
+  "Description": "A plugin for viewing Achievement Score, Mounts and Minions when viewing an Adventurer Plate",
+  "ApplicableVersion": "any",
+  "Tags": [
+    "achievement",
+    "plugin",
+    "adventurerplate"
+  ]
+}
