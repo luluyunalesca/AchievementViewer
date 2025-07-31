@@ -9,8 +9,12 @@ public class Configuration : IPluginConfiguration
 {
     public int Version { get; set; } = 0;
 
-    public bool IsConfigWindowMovable { get; set; } = true;
-    public bool SomePropertyToBeSavedAndWithADefault { get; set; } = true;
+    public bool ShowAchievements { get; set; } = true;
+    public bool ShowMounts { get; set; } = true;
+    public bool ShowMinions { get; set; } = true;
+    public bool ShowLogs { get; set; } = true;
+
+
 
     // the below exist just to make saving less cumbersome
     public void Save()

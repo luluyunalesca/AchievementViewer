@@ -1,12 +1,17 @@
 {
   "Author": "Lulu Yunalesca",
   "Name": "Achievement Viewer",
-  "Punchline": "",
+  "Punchline": "A plugin for viewing Achievement Score",
   "Description": "A plugin for viewing Achievement Score, Mounts and Minions when viewing an Adventurer Plate",
   "ApplicableVersion": "any",
   "Tags": [
     "achievement",
     "plugin",
     "adventurerplate"
-  ]
+  ],
+  "InternalName": "achievementviewer",
+  "AssemblyVersion": "1.0.0.0",
+  "DalamudApiLevel": 12,
+  "EntryPoint": "AchievementViewer.Plugin",
+  "RepoUrl": ""
 }

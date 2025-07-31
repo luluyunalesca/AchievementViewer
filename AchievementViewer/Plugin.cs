@@ -1,10 +1,31 @@
+using AchievementViewer.Windows;
+using Dalamud;
+using Dalamud.Game.Addon.Lifecycle;
+using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Command;
+using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
-using System.IO;
-using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
-using SamplePlugin.Windows;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Common.Lua;
+using Lumina;
+using Lumina.Data.Files;
+using Lumina.Data.Parsing.Layer;
+using NetStone;
+using NetStone.Search;
+using NetStone.Search.Character;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Reflection;
+using System.Threading.Tasks;
+using static FFXIVClientStructs.FFXIV.Client.System.Scheduler.Resource.SchedulerResource;
 
 namespace AchievementViewer;
 
@@ -16,66 +37,99 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IClientState ClientState { get; private set; } = null!;
     [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
+    [PluginService] internal static IAddonLifecycle AddonLifecycle { get; private set; } = null!;
+    [PluginService] internal static IGameGui GameGui { get; private set; } = null!;
 
-    private const string CommandName = "/pmycommand";
+    private const string CommandName = "/aviewer";
 
     public Configuration Configuration { get; init; }
 
-    public readonly WindowSystem WindowSystem = new("SamplePlugin");
+    public readonly WindowSystem WindowSystem = new("AchievementViewer");
     private ConfigWindow ConfigWindow { get; init; }
-    private MainWindow MainWindow { get; init; }
+    private AchievementWindow AchievementWindow { get; init; }
+
+    bool achWindowOpen;
+
+
+    
+
+
 
     public Plugin()
     {
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
 
-        // you might normally want to embed resources and load them from the manifest stream
-        var goatImagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "goat.png");
-
         ConfigWindow = new ConfigWindow(this);
-        MainWindow = new MainWindow(this, goatImagePath);
+        AchievementWindow = new AchievementWindow(this);
 
         WindowSystem.AddWindow(ConfigWindow);
-        WindowSystem.AddWindow(MainWindow);
+        WindowSystem.AddWindow(AchievementWindow);
 
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
-            HelpMessage = "A useful message to display in /xlhelp"
+            HelpMessage = "Opens Achievement Viewer Config"
         });
 
+        achWindowOpen = false;
+
+        //PluginInterface.UiBuilder.Draw += Update;
         PluginInterface.UiBuilder.Draw += DrawUI;
 
-        // This adds a button to the plugin installer entry of this plugin which allows
-        // to toggle the display status of the configuration ui
+        // Adds another button that is doing the same but for the main ui of the plugin
         PluginInterface.UiBuilder.OpenConfigUi += ToggleConfigUI;
 
-        // Adds another button that is doing the same but for the main ui of the plugin
-        PluginInterface.UiBuilder.OpenMainUi += ToggleMainUI;
+        AddonLifecycle.RegisterListener(AddonEvent.PreDraw, "CharaCard", AchievementWindow.UpdatePosition);
+        AddonLifecycle.RegisterListener(AddonEvent.PreSetup, "CharaCard", OpenAchWindow);
+        AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "CharaCard", CloseAchWindow);
 
-        // Add a simple message to the log with level set to information
-        // Use /xllog to open the log window in-game
-        // Example Output: 00:57:54.959 | INF | [SamplePlugin] ===A cool log message from Sample Plugin===
-        Log.Information($"===A cool log message from {PluginInterface.Manifest.Name}===");
     }
+
+    private void OpenAchWindow(AddonEvent type, AddonArgs args)
+    {
+        if (!achWindowOpen)
+        {
+            achWindowOpen = true;
+            ToggleAchievementUI();
+        }
+    }
+
+    private void CloseAchWindow(AddonEvent type, AddonArgs args)
+    {
+        if (achWindowOpen)
+        {
+            achWindowOpen = false;
+            ToggleAchievementUI();
+        }
+    }
+
 
     public void Dispose()
     {
         WindowSystem.RemoveAllWindows();
 
         ConfigWindow.Dispose();
-        MainWindow.Dispose();
+        AchievementWindow.Dispose();
 
         CommandManager.RemoveHandler(CommandName);
+
+        AddonLifecycle.UnregisterListener(AddonEvent.PreDraw, "CharaCard", AchievementWindow.UpdatePosition);
+        AddonLifecycle.UnregisterListener(AddonEvent.PreSetup, "CharaCard", OpenAchWindow);
+        AddonLifecycle.UnregisterListener(AddonEvent.PreFinalize, "CharaCard", CloseAchWindow);
     }
 
     private void OnCommand(string command, string args)
     {
         // in response to the slash command, just toggle the display status of our main ui
-        ToggleMainUI();
+        ToggleConfigUI();
     }
+
+
+    
 
     private void DrawUI() => WindowSystem.Draw();
 
+    
     public void ToggleConfigUI() => ConfigWindow.Toggle();
-    public void ToggleMainUI() => MainWindow.Toggle();
+
+    public void ToggleAchievementUI() => AchievementWindow.Toggle();
 }

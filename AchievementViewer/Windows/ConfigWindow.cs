@@ -1,58 +1,70 @@
 using System;
 using System.Numerics;
+using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using ImGuiNET;
+using Lumina.Excel.Sheets;
 
 namespace AchievementViewer.Windows;
 
 public class ConfigWindow : Window, IDisposable
 {
+    private Plugin Plugin;
     private Configuration Configuration;
 
-    // We give this window a constant ID using ###
-    // This allows for labels being dynamic, like "{FPS Counter}fps###XYZ counter window",
-    // and the window ID will always be "###XYZ counter window" for ImGui
-    public ConfigWindow(Plugin plugin) : base("A Wonderful Configuration Window###With a constant ID")
+    // We give this window a hidden ID using ##
+    // So that the user will see "My Amazing Window" as window title,
+    // but for ImGui the ID is "My Amazing Window##With a hidden ID"
+    public ConfigWindow(Plugin plugin)
+        : base("Achievement Viewer", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
-        Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
-                ImGuiWindowFlags.NoScrollWithMouse;
+        SizeConstraints = new WindowSizeConstraints
+        {
+            MinimumSize = new Vector2(200, 200),
+            MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
+        };
 
-        Size = new Vector2(232, 90);
-        SizeCondition = ImGuiCond.Always;
-
+        Plugin = plugin;
         Configuration = plugin.Configuration;
     }
 
     public void Dispose() { }
 
-    public override void PreDraw()
-    {
-        // Flags must be added or removed before Draw() is being called, or they won't apply
-        if (Configuration.IsConfigWindowMovable)
-        {
-            Flags &= ~ImGuiWindowFlags.NoMove;
-        }
-        else
-        {
-            Flags |= ImGuiWindowFlags.NoMove;
-        }
-    }
-
     public override void Draw()
     {
+        // Do not use .Text() or any other formatted function like TextWrapped(), or SetTooltip().
+        // These expect formatting parameter if any part of the text contains a "%", which we can't
+        // provide through our bindings, leading to a Crash to Desktop.
+        // Replacements can be found in the ImGuiHelpers Class
+
         // can't ref a property, so use a local copy
-        var configValue = Configuration.SomePropertyToBeSavedAndWithADefault;
-        if (ImGui.Checkbox("Random Config Bool", ref configValue))
+        var showAchievements = Configuration.ShowAchievements;
+        if (ImGui.Checkbox("Show Achievements", ref showAchievements))
         {
-            Configuration.SomePropertyToBeSavedAndWithADefault = configValue;
+            Configuration.ShowAchievements = showAchievements;
             // can save immediately on change, if you don't want to provide a "Save and Close" button
             Configuration.Save();
         }
 
-        var movable = Configuration.IsConfigWindowMovable;
-        if (ImGui.Checkbox("Movable Config Window", ref movable))
+        var showMounts = Configuration.ShowMounts;
+        if (ImGui.Checkbox("Show Mounts", ref showMounts))
         {
-            Configuration.IsConfigWindowMovable = movable;
+            Configuration.ShowMounts = showMounts;
+            Configuration.Save();
+        }
+
+        var showMinions = Configuration.ShowMinions;
+        if (ImGui.Checkbox("Show Minions", ref showMinions))
+        {
+            Configuration.ShowMinions = showMinions;
+            Configuration.Save();
+        }
+
+        var showLogs = Configuration.ShowLogs;
+        if (ImGui.Checkbox("Show fflogs", ref showLogs))
+        {
+            Configuration.ShowLogs = showLogs;
             Configuration.Save();
         }
     }
