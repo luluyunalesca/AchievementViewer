@@ -64,7 +64,7 @@ public class GameData
 
         var card = AgentCharaCard.Instance()->Data;
         data.Add(card->Name.ToString());
-        data.Add(getWorld(card->WorldId));
+        data.Add(GetWorld(card->WorldId));
 
         return data;
     }

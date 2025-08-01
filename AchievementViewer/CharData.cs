@@ -7,6 +7,7 @@ using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -43,11 +44,17 @@ public class CharData
 
     }
 
-    public async Character GetCharData(string playerName, short worldID)
+    public Character GetCharData(string playerName, short worldID)
     {
-        Service.CharacterCache.AddCharacterToRequested(playerName, worldID);
-        var data = await RequestData(playerName.Split(" ")[0], playerName.Split(" ")[1], Service.GameData.GetWorld(worldID));
-        Service.CharacterCache.
+        return GetCharData(playerName, Service.GameData.GetWorld(worldID));
+    }
+
+    public Character GetCharData(string playerName, string world)
+    {
+        
+        Service.CharacterCache.AddCharacterToRequested(playerName, world);
+        var data = RequestCharacter(playerName.Split(" ")[0], playerName.Split(" ")[1], world);
+        Service.CharacterCache.RemoveCharacterFromRequested(playerName, world);
         if (data == "")
         {
             Service.Log.Error($"Could not find {playerName} on Ffxivcollect");
@@ -60,15 +67,20 @@ public class CharData
     }
 
 
-    private async Task<string> RequestCharacter(string name, string surname, string server)
+    private string RequestCharacter(string name, string surname, string server)
     {
+
         string lodestoneID = "";
+        Service.Log.Debug(name + " " + surname + " " + server);
 
-        lodestoneID = await RequestLodestoneID(name, surname, server);
-
-        var response = await RequestAchievements(lodestoneID);
-
-        return response;
+        Task.Run(async () =>
+        {
+            lodestoneID = await RequestLodestoneID(name, surname, server);
+            Service.Log.Debug(lodestoneID);
+            return await RequestAchievements(lodestoneID);
+        });
+        return request.Result;
+        Service.Log.Debug("Task didnt run");
     }
 
     //parse Achievement json file to deduplicate strings and deserialize it

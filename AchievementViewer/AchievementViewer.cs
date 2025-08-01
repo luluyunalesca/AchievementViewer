@@ -34,7 +34,7 @@ public sealed class AchievementViewer : IDalamudPlugin
 
     private const string CommandName = "/aviewer";
 
-    public readonly WindowSystem WindowSystem = new("AchievementViewer");
+    public readonly WindowSystem WindowSystem = new WindowSystem("AchievementViewer");
 
     public AchievementViewer(IDalamudPluginInterface PluginInterface)
     {
@@ -45,6 +45,9 @@ public sealed class AchievementViewer : IDalamudPlugin
         Service.ConfigWindow = new ConfigWindow();
         Service.CharaCardWindow = new CharaCardWindow();
         Service.AchievementWindow = new AchievementWindow();
+        Service.CharacterCache = new CharacterCache();
+        Service.CharData = new CharData();
+        Service.GameData = new GameData();
 
         WindowSystem.AddWindow(Service.ConfigWindow);
         WindowSystem.AddWindow(Service.CharaCardWindow);

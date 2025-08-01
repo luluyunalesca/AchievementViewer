@@ -37,7 +37,10 @@ namespace AchievementViewer.Windows;
 
 public class CharaCardWindow : Window, IDisposable
 {
-    public Character lastSeenPlate;
+    private Character lastSeenPlate = new Character(-1);
+    private string lastSeenName = "";
+    private string lastSeenServer = "";
+    private int offsetY = 5;
 
     // We give this window a hidden ID using ##
     // So that the user will see "My Amazing Window" as window title,
@@ -57,21 +60,17 @@ public class CharaCardWindow : Window, IDisposable
 
     
 
-    public override async void Update()
+    public override void Update()
     {
-        var cardData = Service.GameData.getCardData();
+        var cardData = Service.GameData.GetCardData();
 
         if (cardData.Count != 2)
         {
-
             return;
         }
 
         var playerName = cardData[0];
         var world = cardData[1];
-
-        var lastSeenName = Service.CharData.lastSeenName;
-        var lastSeenServer = Service.CharData.lastSeenServer;
 
         if (playerName != lastSeenName || (playerName == lastSeenName && world != lastSeenServer))
         {
@@ -82,30 +81,23 @@ public class CharaCardWindow : Window, IDisposable
             lastSeenName = playerName;
             lastSeenServer = world;
 
-            //var charId = card->AccountId.ToString();
-            Service.Log.Debug(playerName);
-            
-
+            lastSeenPlate = Service.CharData.GetCharData(playerName, world);
 
         }
-        
-
 
     }
 
     public void Dispose() { }
 
-    public void OnClose()
-    {
-        alreadyRequested = false;
-    }
-
+    
     public override void Draw()
     {
         // Do not use .Text() or any other formatted function like TextWrapped(), or SetTooltip().
         // These expect formatting parameter if any part of the text contains a "%", which we can't
         // provide through our bindings, leading to a Crash to Desktop.
         // Replacements can be found in the ImGuiHelpers Class
+
+        var alreadyRequested = Service.CharacterCache.IsAlreadyRequested(lastSeenPlate.Name, lastSeenPlate.Server);
 
         // can't ref a property, so use a local copy
         if (lastSeenPlate.Id == -1 && !alreadyRequested)
