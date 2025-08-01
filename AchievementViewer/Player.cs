@@ -11,6 +11,8 @@ public class Player
     public string? Server { get; set; }
     public string? Data_Center { get; set; }
     public Achievements? achievements { get; set; }
+    public Mounts? mounts { get; set; }
+    public Minions? minions { get; set; }
     public Rankings? rankings { get; set; }
 
     public Player()
@@ -29,7 +31,7 @@ public class Achievements
 
     public int? Points { get; set; }
     public int? Ranked_Points { get; set; }
-    public bool? Public { get; set; }
+    public bool Public { get; set; }
     public Achievements()
     {
 
@@ -40,7 +42,7 @@ public class Mounts
 {
     public short? Count { get; set; }
     public short? Ranked_Count { get; set; }
-    public bool? Public { get; set; }
+    public bool Public { get; set; }
     public Mounts() { }
 }
 
@@ -48,7 +50,7 @@ public class Minions
 {
     public short? Count { get; set; }
     public short? Ranked_Count { get; set; }
-    public bool? Public { get; set; }
+    public bool Public { get; set; }
     public Minions() { }
 }
 
@@ -56,7 +58,7 @@ public class Rankings
 {
     public Achievement_Rank achievement_Rank { get; set; }
     public Mount_Rank? mount_Rank { get; set; }
-    public Minion_Rank?  minion_rank { get; set; }
+    public Minion_Rank?  minion_Rank { get; set; }
     public Rankings() { }
 }
 

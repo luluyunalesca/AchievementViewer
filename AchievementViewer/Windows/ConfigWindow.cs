@@ -10,14 +10,12 @@ namespace AchievementViewer.Windows;
 
 public class ConfigWindow : Window, IDisposable
 {
-    private Plugin Plugin;
-    private Configuration Configuration;
 
     // We give this window a hidden ID using ##
     // So that the user will see "My Amazing Window" as window title,
     // but for ImGui the ID is "My Amazing Window##With a hidden ID"
-    public ConfigWindow(Plugin plugin)
-        : base("Achievement Viewer", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
+    public ConfigWindow()
+        : base("Achievement Viewer Config", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
         SizeConstraints = new WindowSizeConstraints
         {
@@ -25,8 +23,6 @@ public class ConfigWindow : Window, IDisposable
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
 
-        Plugin = plugin;
-        Configuration = plugin.Configuration;
     }
 
     public void Dispose() { }
@@ -39,33 +35,33 @@ public class ConfigWindow : Window, IDisposable
         // Replacements can be found in the ImGuiHelpers Class
 
         // can't ref a property, so use a local copy
-        var showAchievements = Configuration.ShowAchievements;
+        var showAchievements = Service.Configuration.ShowAchievements;
         if (ImGui.Checkbox("Show Achievements", ref showAchievements))
         {
-            Configuration.ShowAchievements = showAchievements;
+            Service.Configuration.ShowAchievements = showAchievements;
             // can save immediately on change, if you don't want to provide a "Save and Close" button
-            Configuration.Save();
+            Service.Configuration.Save();
         }
 
-        var showMounts = Configuration.ShowMounts;
+        var showMounts = Service.Configuration.ShowMounts;
         if (ImGui.Checkbox("Show Mounts", ref showMounts))
         {
-            Configuration.ShowMounts = showMounts;
-            Configuration.Save();
+            Service.Configuration.ShowMounts = showMounts;
+            Service.Configuration.Save();
         }
 
-        var showMinions = Configuration.ShowMinions;
+        var showMinions = Service.Configuration.ShowMinions;
         if (ImGui.Checkbox("Show Minions", ref showMinions))
         {
-            Configuration.ShowMinions = showMinions;
-            Configuration.Save();
+            Service.Configuration.ShowMinions = showMinions;
+            Service.Configuration.Save();
         }
 
-        var showLogs = Configuration.ShowLogs;
-        if (ImGui.Checkbox("Show fflogs", ref showLogs))
+        var showLogs = Service.Configuration.ShowLogs;
+        if (ImGui.Checkbox("Show FFlogs Rankings", ref showLogs))
         {
-            Configuration.ShowLogs = showLogs;
-            Configuration.Save();
+            Service.Configuration.ShowLogs = showLogs;
+            Service.Configuration.Save();
         }
     }
 }
