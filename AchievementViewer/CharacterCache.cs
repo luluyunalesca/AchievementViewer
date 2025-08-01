@@ -37,14 +37,9 @@ public class CharacterCache
         return true;
     }
 
-    public void AddCharacterToCache(Character c) { cachedPlayers.Add(c); }
+    public void addCharacterToCache(Character c)
+    {
+        cachedPlayers.Add(c);
 
-    public void RemoveCharacterFromCache(Character c) { cachedPlayers.Remove(c); }
-
-    public void AddCharacterToRequested(string name, short id) { 
-        alreadyRequested.add(new string[] = { name, id.ToString()})
-        
     }
-
-    public void RemoveCharacterFromRequested(string name, short id) { alreadyRequested.remove(new string[] = { name, id.ToString() })}
 }

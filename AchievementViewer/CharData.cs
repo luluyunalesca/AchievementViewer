@@ -1,109 +1,95 @@
-
+using Dalamud.Game.Addon.Lifecycle;
+using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using Dalamud.Game.Command;
+using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
+using Dalamud.Interface.Windowing;
+using Dalamud.IoC;
+using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using FFXIVClientStructs.FFXIV.Client.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Common.Lua;
+using FFXIVClientStructs.FFXIV.Component.GUI;
+using ImGuiNET;
+using Lumina;
+using Lumina.Data.Files;
+using Lumina.Data.Parsing.Layer;
+using Lumina.Excel.Sheets;
+using Lumina.Excel.Sheets.Experimental;
+using NetStone;
+using NetStone.Search;
+using NetStone.Search.Character;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Numerics;
 using System.Reflection;
+using System.Reflection.Metadata;
+using System.Threading.Tasks;
 
 namespace AchievementViewer;
 
 public class CharData
 {
 
-    public Dictionary<string, string> worlds = new Dictionary<string, string>();
-
-    public string lastSeenName = "";
-    public string lastSeenServer = "";
-
-    public short offsetY = 5;
-
-    public Player lastSeenPlate = new Player(0);
-
-    public bool alreadyRequested = false;
-
     public CharData()
     {
 
     }
 
-    //Parses Server ID to World Mapping from World.csv file into a dictionary
-    private void parseCSV(String path)
+    public async Character GetCharData(string playerName, short worldID)
     {
-        var assembly = Assembly.GetExecutingAssembly();
-        using (Stream? stream = assembly.GetManifestResourceStream(assembly.GetName().Name + "." + path))
+        Service.CharacterCache.AddCharacterToRequested(playerName, worldID);
+        var data = await RequestData(playerName.Split(" ")[0], playerName.Split(" ")[1], Service.GameData.GetWorld(worldID));
+        Service.CharacterCache.
+        if (data == "")
         {
-            if (stream == null)
-            {
-                return;
-            }
-            using (StreamReader reader = new StreamReader(stream))
-            {
-                while (!reader.EndOfStream)
-                {
-                    var line = reader.ReadLine();
-                    var lsplit = line?.Split(',');
-                    if (lsplit?.Length > 1)
-                    {
-                        var newkey = lsplit[0];
-                        var newval = lsplit[2];
-                        worlds[newkey] = newval;
-                    }
-                }
-
-
-            }
+            Service.Log.Error($"Could not find {playerName} on Ffxivcollect");
+            return new Character(-1);
         }
-
-    }
-
-    //Read Adventurer Plate player data that is displayed onscreen
-    private unsafe List<string> getCardData()
-    {
-
-        List<string> data = new List<string>();
-
-        if (AgentCharaCard.Instance() == null || AgentCharaCard.Instance()->Data == null)
+        else
         {
-            return data;
+            return ParseCharacter(data);
         }
-
-
-        var card = AgentCharaCard.Instance()->Data;
-        data.Add(card->Name.ToString());
-        data.Add(worlds[card->WorldId.ToString()].Replace("\"", ""));
-
-        return data;
     }
 
 
-    private async Task<string> requestData(string name, string surname, string server)
+    private async Task<string> RequestCharacter(string name, string surname, string server)
     {
         string lodestoneID = "";
 
-        lodestoneID = await requestLodestoneID(name, surname, server);
+        lodestoneID = await RequestLodestoneID(name, surname, server);
 
-        var response = await requestAchievements(lodestoneID);
+        var response = await RequestAchievements(lodestoneID);
 
         return response;
     }
 
     //parse Achievement json file to deduplicate strings and deserialize it
-    private Player parseData(string data)
+    private Character ParseCharacter(string data)
     {
-        data = change2ndOccurence(data, "achievements", "achievement_rank");
-        data = change2ndOccurence(data, "mounts", "mount_rank");
-        data = change2ndOccurence(data, "minions", "minion_rank");
-        Player player = JsonConvert.DeserializeObject<Player>(data);
-        return player;
+        data = Change2ndOccurence(data, "achievements", "achievement_rank");
+        data = Change2ndOccurence(data, "mounts", "mount_rank");
+        data = Change2ndOccurence(data, "minions", "minion_rank");
+        Character character = JsonConvert.DeserializeObject<Character>(data);
+        return character;
     }
 
 
-    private string change2ndOccurence(string s, string oldString, string newString)
+    private string Change2ndOccurence(string s, string oldString, string newString)
     {
         int i = s.IndexOf(oldString, s.IndexOf(oldString) + 1);
         return s.Substring(0, i) + s.Substring(i, s.Length - i).Replace(oldString, newString);
     }
 
     //Request LodestoneID via Netstone using Players name and server
-    private async Task<string> requestLodestoneID(string name, string surname, string server)
+    private async Task<string> RequestLodestoneID(string name, string surname, string server)
     {
         try
         {
@@ -141,7 +127,7 @@ public class CharData
     }
 
     //Request Achievements as a json from ffxivcollect pertaining to the LodestonedID id
-    private async Task<string> requestAchievements(string id)
+    private async Task<string> RequestAchievements(string id)
     {
 
         var client = new HttpClient();

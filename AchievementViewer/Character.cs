@@ -3,7 +3,7 @@ using System.Threading;
 
 namespace AchievementViewer;
 
-public class Player
+public class Character
 {
 
     public int? Id { get; set; }
@@ -15,11 +15,11 @@ public class Player
     public Minions? minions { get; set; }
     public Rankings? rankings { get; set; }
 
-    public Player()
+    public Character()
 	{
 	}
 
-    public Player (int id)
+    public Character(int id)
     {
         this.Id = id;
     }

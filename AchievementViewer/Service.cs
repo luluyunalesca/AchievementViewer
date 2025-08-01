@@ -16,8 +16,9 @@ internal class Service
     internal static ConfigWindow ConfigWindow { get; set; } = null!;
     internal static AchievementWindow AchievementWindow { get; set; } = null!;
     internal static CharaCardWindow CharaCardWindow { get; set; } = null!;
-    internal static PlayerCache PlayerCache { get; set; } = null!;
+    internal static CharacterCache CharacterCache { get; set; } = null!;
     internal static CharData CharData { get; set; } = null!;
+    internal static GameData GameData { get; set; } = null!;
 
 
     [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;

@@ -37,7 +37,7 @@ namespace AchievementViewer.Windows;
 
 public class CharaCardWindow : Window, IDisposable
 {
-    
+    public Character lastSeenPlate;
 
     // We give this window a hidden ID using ##
     // So that the user will see "My Amazing Window" as window title,
@@ -52,36 +52,44 @@ public class CharaCardWindow : Window, IDisposable
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
 
-        parseCSV("World.csv");  
+        lastSeenPlate = new Character(-1);
     }
 
-    //Parses Server ID to World Mapping from World.csv file into a dictionary
-    private void parseCSV(String path)
+    
+
+    public override async void Update()
     {
-        var assembly = Assembly.GetExecutingAssembly();
-        using (Stream? stream = assembly.GetManifestResourceStream(assembly.GetName().Name + "." + path))
+        var cardData = Service.GameData.getCardData();
+
+        if (cardData.Count != 2)
         {
-            if (stream == null)
+
+            return;
+        }
+
+        var playerName = cardData[0];
+        var world = cardData[1];
+
+        var lastSeenName = Service.CharData.lastSeenName;
+        var lastSeenServer = Service.CharData.lastSeenServer;
+
+        if (playerName != lastSeenName || (playerName == lastSeenName && world != lastSeenServer))
+        {
+            if (playerName == "" || world == "")
             {
                 return;
             }
-            using (StreamReader reader = new StreamReader(stream))
-            {
-                while (!reader.EndOfStream)
-                {
-                    var line = reader.ReadLine();
-                    var lsplit = line?.Split(',');
-                    if (lsplit?.Length > 1)
-                    {
-                        var newkey = lsplit[0];
-                        var newval = lsplit[2];
-                        worlds[newkey] = newval;
-                    }
-                }
+            lastSeenName = playerName;
+            lastSeenServer = world;
+
+            //var charId = card->AccountId.ToString();
+            Service.Log.Debug(playerName);
+            
 
 
-            }
         }
+        
+
 
     }
 
