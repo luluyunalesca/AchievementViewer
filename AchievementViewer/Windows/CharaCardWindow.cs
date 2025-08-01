@@ -72,19 +72,12 @@ public class CharaCardWindow : Window, IDisposable
         var playerName = cardData[0];
         var world = cardData[1];
 
-        if (playerName != lastSeenName || (playerName == lastSeenName && world != lastSeenServer))
+        var request = Service.CharData.GetCharData(playerName, world);
+        if(request.Id == -1)
         {
-            if (playerName == "" || world == "")
-            {
-                return;
-            }
-            lastSeenName = playerName;
-            lastSeenServer = world;
-
-            lastSeenPlate = Service.CharData.GetCharData(playerName, world);
-
+            return;
         }
-
+        lastSeenPlate = request;
     }
 
     public void Dispose() { }

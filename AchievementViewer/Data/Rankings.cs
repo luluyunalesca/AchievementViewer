@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Threading;
 
-namespace AchievementViewer.Data;
+namespace AchievementViewer;
 
 public class Rankings
 {

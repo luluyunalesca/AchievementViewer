@@ -79,7 +79,7 @@ public class CharData
             Service.Log.Debug(lodestoneID);
             return await RequestAchievements(lodestoneID);
         });
-        return request.Result;
+        return "";
         Service.Log.Debug("Task didnt run");
     }
 

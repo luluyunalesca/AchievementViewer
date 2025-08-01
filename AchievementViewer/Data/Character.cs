@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 
-namespace AchievementViewer.Data;
+namespace AchievementViewer;
 
 public class Character
 {
@@ -26,6 +26,10 @@ public class Character
         this.Server = "";
     }
 
+    public void FetchData()
+    {
+        
+    }
 }
 
 
