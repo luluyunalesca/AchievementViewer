@@ -1,6 +1,7 @@
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Pipes;
 using System.Reflection;
 
 namespace AchievementViewer;
@@ -8,7 +9,7 @@ namespace AchievementViewer;
 public class GameData
 {
 
-    private Dictionary<string, string> worlds = new Dictionary<string, string>();
+    private Dictionary<string, string> servers = new Dictionary<string, string>();
 
     public GameData()
 	{
@@ -35,7 +36,7 @@ public class GameData
                     {
                         var newkey = lsplit[0];
                         var newval = lsplit[2];
-                        worlds[newkey] = newval;
+                        servers[newkey] = newval;
                     }
                 }
 
@@ -45,9 +46,9 @@ public class GameData
 
     }
 
-    public string GetWorld(int id)
+    public string GetServer(int id)
     {
-        return worlds[id.ToString()].Replace("\"", "");
+        return servers[id.ToString()].Replace("\"", "");
     }
 
     //Read Adventurer Plate player data that is displayed onscreen
@@ -64,7 +65,7 @@ public class GameData
 
         var card = AgentCharaCard.Instance()->Data;
         data.Add(card->Name.ToString());
-        data.Add(GetWorld(card->WorldId));
+        data.Add(GetServer(card->WorldId));
 
         return data;
     }

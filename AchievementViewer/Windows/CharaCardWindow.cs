@@ -72,12 +72,18 @@ public class CharaCardWindow : Window, IDisposable
         var playerName = cardData[0];
         var world = cardData[1];
 
+        lastSeenName = playerName;
+        lastSeenServer = world;
+
         var request = Service.CharData.GetCharData(playerName, world);
-        if(request.Id == -1)
+        
+        if (request.Id == -1)
         {
             return;
         }
+        
         lastSeenPlate = request;
+
     }
 
     public void Dispose() { }
@@ -90,20 +96,22 @@ public class CharaCardWindow : Window, IDisposable
         // provide through our bindings, leading to a Crash to Desktop.
         // Replacements can be found in the ImGuiHelpers Class
 
-        var alreadyRequested = Service.CharacterCache.IsAlreadyRequested(lastSeenPlate.Name, lastSeenPlate.Server);
+        var alreadyRequested = Service.CharacterCache.IsAlreadyRequested(lastSeenName, lastSeenServer);
 
         // can't ref a property, so use a local copy
-        if (lastSeenPlate.Id == -1 && !alreadyRequested)
-        {
-            ImGui.TextUnformatted("Character could not be found on FFXIVCollect");
-            return;
-        } else if (lastSeenPlate.Id == 0 || alreadyRequested)
+        if (alreadyRequested)
         {
             ImGui.TextUnformatted("Loading...");
             return;
-        }
-        else if (lastSeenPlate.Name == lastSeenName && lastSeenPlate.Server == lastSeenServer && !alreadyRequested)
+        } 
+        else if (lastSeenPlate.Id == -1 && !alreadyRequested)
         {
+            ImGui.TextUnformatted("Character could not be found on FFXIVCollect");
+            return;
+        } 
+        else if (!alreadyRequested)
+        {
+            
             if (lastSeenPlate.achievements.Public)
             {
                 ImGui.TextUnformatted("Achievements");

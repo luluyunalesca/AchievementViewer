@@ -1,5 +1,8 @@
 
 using System.Collections.Generic;
+using System.Net.Http.Headers;
+using System.Xml.Linq;
+using static FFXIVClientStructs.ThisAssembly.Git;
 
 namespace AchievementViewer;
 
@@ -7,7 +10,7 @@ public class CharacterCache
 {
 
     private List<string[]> alreadyRequested = new List<string[]>();
-    private List<Character> cachedPlayers = new List<Character>();
+    private List<Character> cachedChars = new List<Character>();
 
     private short maxCacheSize = 24;
     private short maxRequests = 24;
@@ -17,50 +20,63 @@ public class CharacterCache
 
     }
 
-    public bool StillStored(Character c)
+    public bool IsAlreadyStored(Character c)
     {
-        return true;
+        return cachedChars.Exists(x => x.Name == c.Name && x.Server == c.Server);
     }
 
-    public int GetIndex(string name, short worldID)
+    public bool IsAlreadyStored(string name, int server)
     {
-        return 0;
+        return IsAlreadyStored(name, Service.GameData.GetServer(server));
     }
 
-    public Character RetrieveCharacter()
+    public bool IsAlreadyStored(string name, string server)
     {
-        return new Character(-1);
+        return cachedChars.Exists(x => x.Name == name && x.Server == server);
     }
 
-    public bool IsAlreadyRequested(string name, string world)
+    public Character GetCharacter(string name, int server)
     {
-        return alreadyRequested.Contains(new[] {name, world});
+        return GetCharacter(name, Service.GameData.GetServer(server));
     }
 
-    public void AddCharacterToCache(Character c) { cachedPlayers.Add(c); }
+    public Character GetCharacter(string name, string server)
+    {
+        if (!IsAlreadyStored(name,server))
+        {
+            return new Character(-1);
+        }
+        return cachedChars.Find(x => x.Name == name && x.Server == server);
+       
+    }
 
-    public void RemoveCharacterFromCache(Character c) { cachedPlayers.Remove(c); }
+    public bool IsAlreadyRequested(string name, string server)
+    {
+        return alreadyRequested.Exists(x => x[0] == name && x[1] == server);
+    }
+
+    public void AddCharacterToCache(Character c) { cachedChars.Add(c); }
+
+    public void RemoveCharacterFromCache(Character c) { cachedChars.Remove(c); }
 
     public void AddCharacterToRequested(string name, short id)
     {
-        alreadyRequested.Add(new[] {name, id.ToString()});
-        
+        AddCharacterToRequested(name, Service.GameData.GetServer(id));
     }
 
-    public void AddCharacterToRequested(string name, string id)
+    public void AddCharacterToRequested(string name, string server)
     {
-        alreadyRequested.Add(new[] { name, id });
-
+        alreadyRequested.Add(new[] { name, server});
     }
 
     public void RemoveCharacterFromRequested(string name, short id) 
-    { 
-        alreadyRequested.Remove(new[] {name, id.ToString()});
+    {
+        RemoveCharacterFromRequested(name, Service.GameData.GetServer(id));
     }
 
-    public void RemoveCharacterFromRequested(string name, string id)
+    public void RemoveCharacterFromRequested(string name, string server)
     {
-        alreadyRequested.Remove(new[] { name, id });
+        alreadyRequested.Remove(alreadyRequested.Find(x => x[0] == name && x[1] == server));
     }
 }
 

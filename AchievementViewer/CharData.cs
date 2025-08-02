@@ -32,55 +32,66 @@ using System.Net.Http;
 using System.Numerics;
 using System.Reflection;
 using System.Reflection.Metadata;
+using System.Threading;
 using System.Threading.Tasks;
+using static FFXIVClientStructs.ThisAssembly.Git;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AchievementViewer;
 
 public class CharData
 {
+    Semaphore sem = new Semaphore(1, 1);
 
     public CharData()
     {
 
     }
 
-    public Character GetCharData(string playerName, short worldID)
+    public Character GetCharData(string playerName, short serverID)
     {
-        return GetCharData(playerName, Service.GameData.GetWorld(worldID));
+        return GetCharData(playerName, Service.GameData.GetServer(serverID));
     }
 
-    public Character GetCharData(string playerName, string world)
+    public Character GetCharData(string playerName, string server)
     {
-        
-        Service.CharacterCache.AddCharacterToRequested(playerName, world);
-        var data = RequestCharacter(playerName.Split(" ")[0], playerName.Split(" ")[1], world);
-        Service.CharacterCache.RemoveCharacterFromRequested(playerName, world);
-        if (data == "")
-        {
-            Service.Log.Error($"Could not find {playerName} on Ffxivcollect");
-            return new Character(-1);
-        }
-        else
-        {
-            return ParseCharacter(data);
-        }
+
+        RequestCharacter(playerName, server);
+        return Service.CharacterCache.GetCharacter(playerName, server);
+
+
     }
 
 
-    private string RequestCharacter(string name, string surname, string server)
+    private void RequestCharacter(string playerName, string server)
     {
-
-        string lodestoneID = "";
-        Service.Log.Debug(name + " " + surname + " " + server);
-
         Task.Run(async () =>
         {
-            lodestoneID = await RequestLodestoneID(name, surname, server);
-            Service.Log.Debug(lodestoneID);
-            return await RequestAchievements(lodestoneID);
+            sem.WaitOne();
+            bool alreadyRequested = Service.CharacterCache.IsAlreadyRequested(playerName, server);
+            sem.Release();
+            bool alreadyStored = Service.CharacterCache.IsAlreadyStored(playerName, server);
+            if (!alreadyRequested && !alreadyStored)
+            {
+                sem.WaitOne();
+                Service.CharacterCache.AddCharacterToRequested(playerName, server);
+                sem.Release();
+                string lodestoneID = "";
+
+
+                lodestoneID = await RequestLodestoneID(playerName.Split(" ")[0], playerName.Split(" ")[1], server);
+                string data = await RequestAchievements(lodestoneID);
+                
+                Character c = ParseCharacter(data);
+                if (c.Id > 0)
+                {
+                    Service.CharacterCache.AddCharacterToCache(c);
+                }
+                sem.WaitOne();
+                Service.CharacterCache.RemoveCharacterFromRequested(playerName, server);
+                sem.Release();
+            }
         });
-        return "";
-        Service.Log.Debug("Task didnt run");
     }
 
     //parse Achievement json file to deduplicate strings and deserialize it

@@ -26,10 +26,6 @@ public class Character
         this.Server = "";
     }
 
-    public void FetchData()
-    {
-        
-    }
 }
 
 
