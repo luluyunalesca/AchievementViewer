@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AchievementViewer;
+namespace AchievementViewer.Data;
 public class Minion_Rank
 {
     public int? Server { get; set; }

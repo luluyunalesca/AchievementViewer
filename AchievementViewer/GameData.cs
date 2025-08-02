@@ -46,9 +46,14 @@ public class GameData
 
     }
 
-    public string GetServer(int id)
+    public string GetServer(ushort id)
     {
         return servers[id.ToString()].Replace("\"", "");
+    }
+
+    public bool IsServerValid(ushort id)
+    {
+        return GetServer(id) != "";
     }
 
     //Read Adventurer Plate player data that is displayed onscreen

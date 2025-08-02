@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http.Headers;
 using System.Xml.Linq;
 using static FFXIVClientStructs.ThisAssembly.Git;
+using AchievementViewer.Data;
 
 namespace AchievementViewer;
 
@@ -25,7 +26,7 @@ public class CharacterCache
         return cachedChars.Exists(x => x.Name == c.Name && x.Server == c.Server);
     }
 
-    public bool IsAlreadyStored(string name, int server)
+    public bool IsAlreadyStored(string name, ushort server)
     {
         return IsAlreadyStored(name, Service.GameData.GetServer(server));
     }
@@ -35,7 +36,7 @@ public class CharacterCache
         return cachedChars.Exists(x => x.Name == name && x.Server == server);
     }
 
-    public Character GetCharacter(string name, int server)
+    public Character GetCharacter(string name, ushort server)
     {
         return GetCharacter(name, Service.GameData.GetServer(server));
     }
@@ -59,7 +60,7 @@ public class CharacterCache
 
     public void RemoveCharacterFromCache(Character c) { cachedChars.Remove(c); }
 
-    public void AddCharacterToRequested(string name, short id)
+    public void AddCharacterToRequested(string name, ushort id)
     {
         AddCharacterToRequested(name, Service.GameData.GetServer(id));
     }
@@ -69,7 +70,7 @@ public class CharacterCache
         alreadyRequested.Add(new[] { name, server});
     }
 
-    public void RemoveCharacterFromRequested(string name, short id) 
+    public void RemoveCharacterFromRequested(string name, ushort id) 
     {
         RemoveCharacterFromRequested(name, Service.GameData.GetServer(id));
     }

@@ -1,41 +1,11 @@
-using Dalamud.Game.Addon.Lifecycle;
-using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
-using Dalamud.Game.Command;
-using Dalamud.Interface.Utility;
-using Dalamud.Interface.Utility.Raii;
-using Dalamud.Interface.Windowing;
-using Dalamud.IoC;
-using Dalamud.Plugin;
-using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.Game.Character;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using FFXIVClientStructs.FFXIV.Client.UI;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using FFXIVClientStructs.FFXIV.Common.Lua;
-using FFXIVClientStructs.FFXIV.Component.GUI;
-using ImGuiNET;
-using Lumina;
-using Lumina.Data.Files;
-using Lumina.Data.Parsing.Layer;
-using Lumina.Excel.Sheets;
-using Lumina.Excel.Sheets.Experimental;
 using NetStone;
-using NetStone.Search;
 using NetStone.Search.Character;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Numerics;
-using System.Reflection;
-using System.Reflection.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
-using static FFXIVClientStructs.ThisAssembly.Git;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using AchievementViewer.Data;
 
 namespace AchievementViewer;
 
@@ -48,7 +18,7 @@ public class CharData
 
     }
 
-    public Character GetCharData(string playerName, short serverID)
+    public Character GetCharData(string playerName, ushort serverID)
     {
         return GetCharData(playerName, Service.GameData.GetServer(serverID));
     }
@@ -59,6 +29,11 @@ public class CharData
         RequestCharacter(playerName, server);
         return Service.CharacterCache.GetCharacter(playerName, server);
 
+
+    }
+
+    public void UpdatePartyMembers()
+    {
 
     }
 
