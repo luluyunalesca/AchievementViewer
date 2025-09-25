@@ -1,17 +1,19 @@
+using AchievementViewer.Data;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Interface.Windowing;
-using FFXIVClientStructs.FFXIV.Component.GUI;
-using ImGuiNET;
+using Lumina.Excel.Sheets;
+using Serilog;
 using System;
 using System.Numerics;
-using AchievementViewer.Data;
+using static FFXIVClientStructs.ThisAssembly.Git;
 
 namespace AchievementViewer.Windows;
 
 public class CharaCardWindow : Window, IDisposable
 {
-    private Character lastSeenPlate = new Character(-1);
+    private Character lastSeenPlate = new Character(-1, false);
     private string lastSeenName = "";
     private string lastSeenServer = "";
     private int offsetY = 5;
@@ -29,30 +31,37 @@ public class CharaCardWindow : Window, IDisposable
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
 
-        lastSeenPlate = new Character(-1);
+        lastSeenPlate = new Character(-1, false);
     }
 
     
-
     public override void Update()
     {
+
         var cardData = Service.GameData.GetCardData();
 
         if (cardData.Count != 2)
         {
+            lastSeenPlate = new Character(-1, false);
             return;
         }
 
         var playerName = cardData[0];
-        var world = cardData[1];
-
+        var server = cardData[1];
+        //Log.Debug($"{playerName} {server}");
         lastSeenName = playerName;
-        lastSeenServer = world;
+        lastSeenServer = server;
 
-        var request = Service.CharData.GetCharData(playerName, world);
-        
+        var request = Service.CharData.GetCharData(playerName, server);
+
+        var alreadyRequested = Service.CharData.IsAchDataRequested((int)lastSeenPlate.Id);
+        bool alreadyStored = Service.CharacterCache.IsAlreadyStored(playerName, server);
+        //Log.Debug($"{alreadyRequested} {lastSeenPlate.Id} {alreadyStored}");
+
+
         if (request.Id == -1)
         {
+            lastSeenPlate = new Character(-1, false);
             return;
         }
         
@@ -69,16 +78,16 @@ public class CharaCardWindow : Window, IDisposable
         // These expect formatting parameter if any part of the text contains a "%", which we can't
         // provide through our bindings, leading to a Crash to Desktop.
         // Replacements can be found in the ImGuiHelpers Class
+        var alreadyRequested = Service.CharData.IsAchDataRequested((int)lastSeenPlate.Id);
 
-        var alreadyRequested = Service.CharacterCache.IsAlreadyRequested(lastSeenName, lastSeenServer);
 
         // can't ref a property, so use a local copy
-        if (alreadyRequested)
+        if (alreadyRequested || lastSeenPlate.Id == -1)
         {
             ImGui.TextUnformatted("Loading...");
             return;
         } 
-        else if (lastSeenPlate.Id == -1 && !alreadyRequested)
+        else if (!lastSeenPlate.foundOnCollect)
         {
             ImGui.TextUnformatted("Character could not be found on FFXIVCollect");
             return;
@@ -86,7 +95,7 @@ public class CharaCardWindow : Window, IDisposable
         else if (!alreadyRequested)
         {
             
-            if (lastSeenPlate.achievements.Public)
+            if (lastSeenPlate.achievements.Public && Service.Configuration.ShowAchievements)
             {
                 ImGui.TextUnformatted("Achievements");
                 ImGui.TextUnformatted($"#{lastSeenPlate.rankings.achievement_Rank.Server} {lastSeenPlate.Server}  " +
@@ -95,7 +104,7 @@ public class CharaCardWindow : Window, IDisposable
 
             }
 
-            if (lastSeenPlate.mounts.Public)
+            if (lastSeenPlate.mounts.Public && Service.Configuration.ShowMounts)
             {
                 ImGui.TextUnformatted("Mounts");
                 ImGui.TextUnformatted($"#{lastSeenPlate.rankings.mount_Rank.Server} {lastSeenPlate.Server}  " +
@@ -103,7 +112,7 @@ public class CharaCardWindow : Window, IDisposable
                     $"#{lastSeenPlate.rankings.mount_Rank.Global} Global");
             }
 
-            if (lastSeenPlate.minions.Public)
+            if (lastSeenPlate.minions.Public && Service.Configuration.ShowMinions)
             {
                 ImGui.TextUnformatted("Minions");
                 ImGui.TextUnformatted($"#{lastSeenPlate.rankings.minion_Rank.Server} {lastSeenPlate.Server}  " +
@@ -114,21 +123,21 @@ public class CharaCardWindow : Window, IDisposable
     }
 
     public unsafe void UpdatePosition(AddonEvent type, AddonArgs args)
-    { 
-        var addon = (AtkUnitBase*) Service.GameGui.GetAddonByName("CharaCard", 1);
-        if(addon == null)
+    {
+        var addon = Service.GameGui.GetAddonByName("CharaCard", 1);
+        if (addon == null)
         {
             return;
         }
 
-        var x = addon->X;
-        var y = addon->Y;
-        var width = addon->RootNode->Width;
-        var height = addon->RootNode->Height;
-        
-        Position = new Vector2(x, y + height + offsetY);
+        var x = addon.X;
+        var y = addon.Y;
+        var width = addon.ScaledWidth;
+        var height = addon.ScaledHeight;
+
+        this.Position = new Vector2(x, y + height + offsetY);
     }
 
-    
+
 }
 

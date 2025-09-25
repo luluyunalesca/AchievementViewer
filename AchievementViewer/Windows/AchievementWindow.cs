@@ -1,10 +1,7 @@
 using System;
-using System.Numerics;
-using Dalamud.Interface.Utility;
-using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
-using ImGuiNET;
-using Lumina.Excel.Sheets;
+using Dalamud.Bindings.ImGui;
+using System.Numerics;
 
 namespace AchievementViewer.Windows;
 public class AchievementWindow : Window, IDisposable
@@ -22,7 +19,9 @@ public class AchievementWindow : Window, IDisposable
 
     public void Dispose() { }
 
-    public override void Draw() { }
+    public override void Draw() {
+        UIFunctions.DrawProgressBar(200, 300, true,  250 , 20 ,"Points",true);
+    }
 }
 
     

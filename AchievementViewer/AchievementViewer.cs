@@ -1,31 +1,10 @@
 using AchievementViewer.Windows;
-using Dalamud;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Command;
 using Dalamud.Interface.Windowing;
-using Dalamud.IoC;
 using Dalamud.Plugin;
-using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using FFXIVClientStructs.FFXIV.Common.Lua;
-using Lumina;
-using Lumina.Data.Files;
-using Lumina.Data.Parsing.Layer;
-using NetStone;
-using NetStone.Search;
-using NetStone.Search.Character;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Reflection;
-using System.Threading.Tasks;
-using static FFXIVClientStructs.FFXIV.Client.System.Scheduler.Resource.SchedulerResource;
+
 
 namespace AchievementViewer;
 
@@ -99,6 +78,7 @@ public sealed class AchievementViewer : IDalamudPlugin
     private void OpenCharaCardUI(AddonEvent type, AddonArgs args)
     {
         Service.CharaCardWindow.IsOpen = true;
+
     }
 
     private void CloseCharaCardUI(AddonEvent type, AddonArgs args)

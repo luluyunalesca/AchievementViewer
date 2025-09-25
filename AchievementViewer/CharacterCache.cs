@@ -4,14 +4,22 @@ using System.Net.Http.Headers;
 using System.Xml.Linq;
 using static FFXIVClientStructs.ThisAssembly.Git;
 using AchievementViewer.Data;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using System.Text.Json.Serialization;
+using System.Net.Security;
+using System.Threading;
+using System.Threading.Tasks;
+using Serilog;
+
 
 namespace AchievementViewer;
 
+
+
 public class CharacterCache
 {
-
-    private List<string[]> alreadyRequested = new List<string[]>();
     private List<Character> cachedChars = new List<Character>();
+    private Dictionary<(string, string), int> nameToIDMap = new Dictionary<(string, string), int>();
 
     private short maxCacheSize = 24;
     private short maxRequests = 24;
@@ -23,7 +31,7 @@ public class CharacterCache
 
     public bool IsAlreadyStored(Character c)
     {
-        return cachedChars.Exists(x => x.Name == c.Name && x.Server == c.Server);
+        return cachedChars.Exists(x => x.Id == c.Id);
     }
 
     public bool IsAlreadyStored(string name, ushort server)
@@ -33,7 +41,19 @@ public class CharacterCache
 
     public bool IsAlreadyStored(string name, string server)
     {
-        return cachedChars.Exists(x => x.Name == name && x.Server == server);
+        return IsAlreadyStored(new Character(GetID(name, server), false));
+        
+    }
+
+    public int GetID(string name, string server)
+    {
+        if (nameToIDMap.TryGetValue((name, server), out var id))
+        {
+            return id;
+        } else
+        { 
+            return -1;
+        }
     }
 
     public Character GetCharacter(string name, ushort server)
@@ -45,39 +65,27 @@ public class CharacterCache
     {
         if (!IsAlreadyStored(name,server))
         {
-            return new Character(-1);
+            return new Character(-1, false);
         }
-        return cachedChars.Find(x => x.Name == name && x.Server == server);
+        int id = GetID(name, server);
+        return cachedChars.Find(x => x.Id == id);
        
     }
 
-    public bool IsAlreadyRequested(string name, string server)
-    {
-        return alreadyRequested.Exists(x => x[0] == name && x[1] == server);
-    }
-
+   
     public void AddCharacterToCache(Character c) { cachedChars.Add(c); }
 
     public void RemoveCharacterFromCache(Character c) { cachedChars.Remove(c); }
 
-    public void AddCharacterToRequested(string name, ushort id)
+    public void AddToMapping(string name, string server, string id)
     {
-        AddCharacterToRequested(name, Service.GameData.GetServer(id));
+        AddToMapping(name, server, Service.CharData.ParseID(id));
     }
 
-    public void AddCharacterToRequested(string name, string server)
+    public void AddToMapping(string name, string server, int id)
     {
-        alreadyRequested.Add(new[] { name, server});
-    }
+        nameToIDMap.Add((name, server), id);
 
-    public void RemoveCharacterFromRequested(string name, ushort id) 
-    {
-        RemoveCharacterFromRequested(name, Service.GameData.GetServer(id));
-    }
-
-    public void RemoveCharacterFromRequested(string name, string server)
-    {
-        alreadyRequested.Remove(alreadyRequested.Find(x => x[0] == name && x[1] == server));
     }
 }
 

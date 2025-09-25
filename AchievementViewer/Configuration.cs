@@ -12,7 +12,6 @@ public class Configuration : IPluginConfiguration
     public bool ShowAchievements { get; set; } = true;
     public bool ShowMounts { get; set; } = true;
     public bool ShowMinions { get; set; } = true;
-    public bool ShowLogs { get; set; } = true;
     public bool OpenInBrowser { get; set; } = false;
     public bool ContextMenuStreamer { get; set; } = false;
     public bool OpenContextMenuInPartyView { get; set; } = false;

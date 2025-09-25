@@ -1,10 +1,7 @@
 using System;
 using System.Numerics;
-using Dalamud.Interface.Utility;
-using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
-using ImGuiNET;
-using Lumina.Excel.Sheets;
+using Dalamud.Bindings.ImGui;
 
 namespace AchievementViewer.Windows;
 
@@ -54,13 +51,6 @@ public class ConfigWindow : Window, IDisposable
         if (ImGui.Checkbox("Show Minions", ref showMinions))
         {
             Service.Configuration.ShowMinions = showMinions;
-            Service.Configuration.Save();
-        }
-
-        var showLogs = Service.Configuration.ShowLogs;
-        if (ImGui.Checkbox("Show FFlogs Rankings", ref showLogs))
-        {
-            Service.Configuration.ShowLogs = showLogs;
             Service.Configuration.Save();
         }
     }
