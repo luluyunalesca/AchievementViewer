@@ -2,18 +2,13 @@ using AchievementViewer.Data;
 using NetStone;
 using NetStone.Search.Character;
 using Newtonsoft.Json;
-using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
-using System.Runtime.InteropServices.Marshalling;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 using static Dalamud.Interface.Utility.Raii.ImRaii;
-using static FFXIVClientStructs.ThisAssembly.Git;
 
 namespace AchievementViewer;
 
@@ -23,6 +18,7 @@ public class CharData
     Semaphore achDataSem = new Semaphore(1, 1);
     private List<string[]> requestedIDs = new List<string[]>();
     private List<int> requestedAchData = new List<int>();
+    private int invalidLodestoneRequests = 0;
 
     public CharData()
     {
@@ -66,24 +62,16 @@ public class CharData
             if (!idRequested && !achDataRequested) { 
                 string lodestoneID = await RequestLodestoneID(name, server);
                 
-                
-                
-
-                Service.Log.Debug($"Lodestone ID = {lodestoneID}");
+                if (ParseID(lodestoneID) == -1)
+                {
+                    return;
+                }
 
                 string data = await RequestAchievements(lodestoneID);
                 Character c = ParseCharacter(lodestoneID, data);
 
-                if (c.foundOnCollect) {
-                    Service.Log.Debug($"Achievement Data of Char {c.Id} received");
-                } else
-                {
-                    Service.Log.Debug("Char not found on Collect");
-
-                }
                 if (c.Id > 0)
                 {
-                    Service.Log.Debug($"Adding character {c.Id} to cache");
                     Service.CharacterCache.RemoveCharacterFromCache(Service.CharacterCache.GetCharacter(name, server));
                     Service.CharacterCache.AddCharacterToCache(c);
                 }
@@ -95,12 +83,13 @@ public class CharData
     private Character ParseCharacter(string id, string data)
     {
         int newId = ParseID(id);
-        if (data == "") return new Character(newId, false);
+        if (data == "") return newId > 0 ? new Character(newId, false, true) : new Character(newId, false, false);
         data = Change2ndOccurence(data, "achievements", "achievement_rank");
         data = Change2ndOccurence(data, "mounts", "mount_rank");
         data = Change2ndOccurence(data, "minions", "minion_rank");
         Character character = JsonConvert.DeserializeObject<Character>(data);
         character.foundOnCollect = true;
+        character.foundOnLodestone = true;
         return character;
     }
 
@@ -119,9 +108,6 @@ public class CharData
         
         AddIDToRequested(name, server);
 
-
-        Service.Log.Debug("LodestoneID Requested");
-
         var s = name.Split(" ");
         var firstname = s[0];
         var surname = s[1];
@@ -138,6 +124,18 @@ public class CharData
                     CharacterName = firstname + " " + surname,
                     World = server
                 });
+
+                if (!searchResponse.HasResults)
+                {
+                    int id = -2 - invalidLodestoneRequests;
+
+                    Service.CharacterCache.AddToMapping(name, server, id);
+                    Service.CharacterCache.AddCharacterToCache(new Character(id, false, false));
+                    invalidLodestoneRequests++;
+                    RemoveIDFromRequested(name, server);
+                    return "-1";
+                }
+
                 var lodestoneCharacter =
                     searchResponse?.Results
                     .FirstOrDefault(entry => entry.Name == firstname + " " + surname);
@@ -149,7 +147,7 @@ public class CharData
 
                 Service.CharacterCache.AddToMapping(name, server, lodestoneId);
                 //Temporary Addition to stop duplicate requests to Receice lodestone id
-                Service.CharacterCache.AddCharacterToCache(new Character(ParseID(lodestoneId), false));
+                Service.CharacterCache.AddCharacterToCache(new Character(ParseID(lodestoneId), false, true));
 
                 RemoveIDFromRequested(name, server);
        
@@ -158,6 +156,9 @@ public class CharData
             catch (HttpRequestException e)
             {
                 //Handle potential errors in web request
+                
+
+                
                 Service.Log.Error(e.ToString());
             }
         }
@@ -180,9 +181,6 @@ public class CharData
         
         AddAchDataToRequested(newId);
 
-
-        Service.Log.Debug($"AchData Requested with ID: {id}");
-
         var client = new HttpClient();
         var request = new HttpRequestMessage(HttpMethod.Get, "https://ffxivcollect.com/api/characters/" + id);
         var response = await client.SendAsync(request);
@@ -196,7 +194,6 @@ public class CharData
         }
         else
         {
-            Service.Log.Debug("Achievement Request Failed");
             RemoveAchDataFromRequested(newId);
             
             return "";

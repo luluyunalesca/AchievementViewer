@@ -3,17 +3,16 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Interface.Windowing;
-using Lumina.Excel.Sheets;
-using Serilog;
 using System;
+using System.Drawing;
 using System.Numerics;
-using static FFXIVClientStructs.ThisAssembly.Git;
+using static FFXIVClientStructs.FFXIV.Client.Game.UI.Achievement.Delegates;
 
 namespace AchievementViewer.Windows;
 
 public class CharaCardWindow : Window, IDisposable
 {
-    private Character lastSeenPlate = new Character(-1, false);
+    private Character lastSeenPlate = new Character(-1, false, false);
     private string lastSeenName = "";
     private string lastSeenServer = "";
     private int offsetY = 5;
@@ -31,7 +30,7 @@ public class CharaCardWindow : Window, IDisposable
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
 
-        lastSeenPlate = new Character(-1, false);
+        lastSeenPlate = new Character(-1, false, false);
     }
 
     
@@ -42,26 +41,20 @@ public class CharaCardWindow : Window, IDisposable
 
         if (cardData.Count != 2)
         {
-            lastSeenPlate = new Character(-1, false);
+            lastSeenPlate = new Character(-1, false, false);
             return;
         }
 
         var playerName = cardData[0];
         var server = cardData[1];
-        //Log.Debug($"{playerName} {server}");
         lastSeenName = playerName;
         lastSeenServer = server;
 
         var request = Service.CharData.GetCharData(playerName, server);
 
-        var alreadyRequested = Service.CharData.IsAchDataRequested((int)lastSeenPlate.Id);
-        bool alreadyStored = Service.CharacterCache.IsAlreadyStored(playerName, server);
-        //Log.Debug($"{alreadyRequested} {lastSeenPlate.Id} {alreadyStored}");
-
-
         if (request.Id == -1)
         {
-            lastSeenPlate = new Character(-1, false);
+            lastSeenPlate = new Character(-1, false, false);
             return;
         }
         
@@ -86,22 +79,36 @@ public class CharaCardWindow : Window, IDisposable
         {
             ImGui.TextUnformatted("Loading...");
             return;
-        } 
+        } else if (!lastSeenPlate.foundOnLodestone) {
+            ImGui.TextUnformatted("Character could not be found on The Lodestone");
+            return;
+        }
         else if (!lastSeenPlate.foundOnCollect)
         {
             ImGui.TextUnformatted("Character could not be found on FFXIVCollect");
             return;
-        } 
+        }
         else if (!alreadyRequested)
         {
-            
+            //tried fixing progressbar width to window size but had some weird resizing stuff going on
+            var addon = Service.GameGui.GetAddonByName("CharaCard", 1);
+            var width = (int)(addon.ScaledWidth * 0.25);
+
             if (lastSeenPlate.achievements.Public && Service.Configuration.ShowAchievements)
             {
                 ImGui.TextUnformatted("Achievements");
                 ImGui.TextUnformatted($"#{lastSeenPlate.rankings.achievement_Rank.Server} {lastSeenPlate.Server}  " +
                     $"#{lastSeenPlate.rankings.achievement_Rank.Data_Center} {lastSeenPlate.Data_Center}  " +
                     $"#{lastSeenPlate.rankings.achievement_Rank.Global} Global");
+                if (Service.Configuration.ShowPoints)
+                {
+                    int pointAmount = (Service.Configuration.ShowRanked ? lastSeenPlate.achievements.Ranked_Points : lastSeenPlate.achievements.Points) ?? default(int);
+                    int pointTotal = (Service.Configuration.ShowRanked ? lastSeenPlate.achievements.Ranked_Points_Total : lastSeenPlate.achievements.Points_Total) ?? default(int);
+                    var percentage = (int)Math.Round((double)(100 * pointAmount) / pointTotal);
 
+
+                    UIFunctions.DrawProgressBar((float)percentage / 100, width, 20, $"{pointAmount} of {pointTotal} Points ({percentage}%)");
+                }
             }
 
             if (lastSeenPlate.mounts.Public && Service.Configuration.ShowMounts)
@@ -110,6 +117,15 @@ public class CharaCardWindow : Window, IDisposable
                 ImGui.TextUnformatted($"#{lastSeenPlate.rankings.mount_Rank.Server} {lastSeenPlate.Server}  " +
                     $"#{lastSeenPlate.rankings.mount_Rank.Data_Center} {lastSeenPlate.Data_Center}  " +
                     $"#{lastSeenPlate.rankings.mount_Rank.Global} Global");
+                if (Service.Configuration.ShowPoints)
+                {
+                    int count = (Service.Configuration.ShowRanked ? lastSeenPlate.mounts.Ranked_Count : lastSeenPlate.mounts.Count) ?? default(int);
+                    int total = (Service.Configuration.ShowRanked ? lastSeenPlate.mounts.Ranked_Total : lastSeenPlate.mounts.Total) ?? default(int);
+                    var percentage = (int)Math.Round((double)(100 * count) / total);
+
+
+                    UIFunctions.DrawProgressBar((float)percentage / 100, width, 20, $"{count}/{total} ({percentage}%)");
+                }
             }
 
             if (lastSeenPlate.minions.Public && Service.Configuration.ShowMinions)
@@ -118,6 +134,15 @@ public class CharaCardWindow : Window, IDisposable
                 ImGui.TextUnformatted($"#{lastSeenPlate.rankings.minion_Rank.Server} {lastSeenPlate.Server}  " +
                     $"#{lastSeenPlate.rankings.minion_Rank.Data_Center} {lastSeenPlate.Data_Center}  " +
                     $"#{lastSeenPlate.rankings.minion_Rank.Global} Global");
+                if (Service.Configuration.ShowPoints)
+                {
+                    int count = (Service.Configuration.ShowRanked ? lastSeenPlate.minions.Ranked_Count : lastSeenPlate.minions.Count) ?? default(int);
+                    int total = (Service.Configuration.ShowRanked ? lastSeenPlate.minions.Ranked_Total : lastSeenPlate.minions.Total) ?? default(int);
+                    var percentage = (int)Math.Round((double)(100 * count) / total);
+
+
+                    UIFunctions.DrawProgressBar((float)percentage / 100, width - 1, 20, $"{count}/{total} ({percentage}%)");
+                }
             }
         }
     }

@@ -1,15 +1,6 @@
 
 using System.Collections.Generic;
-using System.Net.Http.Headers;
-using System.Xml.Linq;
-using static FFXIVClientStructs.ThisAssembly.Git;
 using AchievementViewer.Data;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using System.Text.Json.Serialization;
-using System.Net.Security;
-using System.Threading;
-using System.Threading.Tasks;
-using Serilog;
 
 
 namespace AchievementViewer;
@@ -41,7 +32,7 @@ public class CharacterCache
 
     public bool IsAlreadyStored(string name, string server)
     {
-        return IsAlreadyStored(new Character(GetID(name, server), false));
+        return IsAlreadyStored(new Character(GetID(name, server), false, false));
         
     }
 
@@ -65,7 +56,7 @@ public class CharacterCache
     {
         if (!IsAlreadyStored(name,server))
         {
-            return new Character(-1, false);
+            return new Character(-1, false, false);
         }
         int id = GetID(name, server);
         return cachedChars.Find(x => x.Id == id);

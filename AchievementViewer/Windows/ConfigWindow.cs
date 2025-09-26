@@ -53,5 +53,19 @@ public class ConfigWindow : Window, IDisposable
             Service.Configuration.ShowMinions = showMinions;
             Service.Configuration.Save();
         }
+
+        var showPoints = Service.Configuration.ShowPoints;
+        if (ImGui.Checkbox("Show Points/Amount", ref showPoints))
+        {
+            Service.Configuration.ShowPoints = showPoints;
+            Service.Configuration.Save();
+        }
+
+        var showRanked = Service.Configuration.ShowRanked;
+        if (ImGui.Checkbox("Show Ranked", ref showRanked))
+        {
+            Service.Configuration.ShowRanked = showRanked;
+            Service.Configuration.Save();
+        }
     }
 }

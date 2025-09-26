@@ -37,7 +37,7 @@ public sealed class AchievementViewer : IDalamudPlugin
             HelpMessage = "Opens Achievement Viewer Config"
         });
 
-        ContextMenu.Enable();
+        //ContextMenu.Enable();
 
         //PluginInterface.UiBuilder.Draw += Update;
         PluginInterface.UiBuilder.Draw += DrawUI;

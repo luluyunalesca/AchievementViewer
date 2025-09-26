@@ -20,7 +20,7 @@ public class AchievementWindow : Window, IDisposable
     public void Dispose() { }
 
     public override void Draw() {
-        UIFunctions.DrawProgressBar(200, 300, true,  250 , 20 ,"Points",true);
+        
     }
 }
 
