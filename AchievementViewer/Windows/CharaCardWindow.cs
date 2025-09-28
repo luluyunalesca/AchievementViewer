@@ -4,6 +4,7 @@ using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Interface.Windowing;
 using System;
+using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Numerics;
 using static FFXIVClientStructs.FFXIV.Client.Game.UI.Achievement.Delegates;
@@ -12,10 +13,10 @@ namespace AchievementViewer.Windows;
 
 public class CharaCardWindow : Window, IDisposable
 {
-    private Character lastSeenPlate = new Character(-1, false, false);
+    private Character lastSeenPlate = new(-1, false, false);
     private string lastSeenName = "";
     private string lastSeenServer = "";
-    private int offsetY = 5;
+    private readonly int offsetY = 5;
 
     // We give this window a hidden ID using ##
     // So that the user will see "My Amazing Window" as window title,
@@ -94,33 +95,47 @@ public class CharaCardWindow : Window, IDisposable
             var addon = Service.GameGui.GetAddonByName("CharaCard", 1);
             var width = (int)(addon.ScaledWidth * 0.25);
 
-            if (lastSeenPlate.achievements.Public && Service.Configuration.ShowAchievements)
-            {
-                ImGui.TextUnformatted("Achievements");
-                ImGui.TextUnformatted($"#{lastSeenPlate.rankings.achievement_Rank.Server} {lastSeenPlate.Server}  " +
-                    $"#{lastSeenPlate.rankings.achievement_Rank.Data_Center} {lastSeenPlate.Data_Center}  " +
-                    $"#{lastSeenPlate.rankings.achievement_Rank.Global} Global");
+            var achievements = lastSeenPlate.achievements;
+            var rankings = lastSeenPlate.rankings;
+            var mounts = lastSeenPlate.mounts;
+            var minions = lastSeenPlate.minions;
+            ImGui.TextUnformatted("Achievements");
+            if (!(achievements?.Public ?? false)) { 
+                ImGui.TextUnformatted("Set to private.");
+            } else if (Service.Configuration.ShowAchievements) {
+
+                var achievementrank = rankings?.achievement_Rank;
+                ImGui.TextUnformatted($"#{achievementrank?.Server} {lastSeenPlate.Server}  " +
+                    $"#{achievementrank?.Data_Center} {lastSeenPlate.Data_Center}  " +
+                    $"#{achievementrank?.Global} Global");
                 if (Service.Configuration.ShowPoints)
                 {
-                    int pointAmount = (Service.Configuration.ShowRanked ? lastSeenPlate.achievements.Ranked_Points : lastSeenPlate.achievements.Points) ?? default(int);
-                    int pointTotal = (Service.Configuration.ShowRanked ? lastSeenPlate.achievements.Ranked_Points_Total : lastSeenPlate.achievements.Points_Total) ?? default(int);
-                    var percentage = (int)Math.Round((double)(100 * pointAmount) / pointTotal);
+                var pointAmount = (Service.Configuration.ShowRanked ? achievements.Ranked_Points : achievements.Points) ?? default;
+                var pointTotal = (Service.Configuration.ShowRanked ? achievements.Ranked_Points_Total : achievements.Points_Total) ?? default;
+                var percentage = (int)Math.Round((double)(100 * pointAmount) / pointTotal);
 
 
-                    UIFunctions.DrawProgressBar((float)percentage / 100, width, 20, $"{pointAmount} of {pointTotal} Points ({percentage}%)");
+                UIFunctions.DrawProgressBar((float)percentage / 100, width, 20, $"{pointAmount} of {pointTotal} Points ({percentage}%)");
                 }
             }
+        
 
-            if (lastSeenPlate.mounts.Public && Service.Configuration.ShowMounts)
+            ImGui.TextUnformatted("Mounts");
+            if (!(mounts?.Public ?? false))
             {
-                ImGui.TextUnformatted("Mounts");
-                ImGui.TextUnformatted($"#{lastSeenPlate.rankings.mount_Rank.Server} {lastSeenPlate.Server}  " +
-                    $"#{lastSeenPlate.rankings.mount_Rank.Data_Center} {lastSeenPlate.Data_Center}  " +
-                    $"#{lastSeenPlate.rankings.mount_Rank.Global} Global");
+                ImGui.TextUnformatted("Set to private.");
+            }
+            else if (Service.Configuration.ShowMounts)
+            {
+                
+                var mountrank = rankings?.mount_Rank;
+                ImGui.TextUnformatted($"#{mountrank?.Server} {lastSeenPlate.Server}  " +
+                    $"#{mountrank?.Data_Center} {lastSeenPlate.Data_Center}  " +
+                    $"#{mountrank?.Global} Global");
                 if (Service.Configuration.ShowPoints)
                 {
-                    int count = (Service.Configuration.ShowRanked ? lastSeenPlate.mounts.Ranked_Count : lastSeenPlate.mounts.Count) ?? default(int);
-                    int total = (Service.Configuration.ShowRanked ? lastSeenPlate.mounts.Ranked_Total : lastSeenPlate.mounts.Total) ?? default(int);
+                    int count = (Service.Configuration.ShowRanked ? mounts.Ranked_Count : mounts.Count) ?? default(int);
+                    int total = (Service.Configuration.ShowRanked ? mounts.Ranked_Total : mounts.Total) ?? default(int);
                     var percentage = (int)Math.Round((double)(100 * count) / total);
 
 
@@ -128,22 +143,30 @@ public class CharaCardWindow : Window, IDisposable
                 }
             }
 
-            if (lastSeenPlate.minions.Public && Service.Configuration.ShowMinions)
+
+            ImGui.TextUnformatted("Minions");
+            if (!(minions?.Public ?? false))
             {
-                ImGui.TextUnformatted("Minions");
-                ImGui.TextUnformatted($"#{lastSeenPlate.rankings.minion_Rank.Server} {lastSeenPlate.Server}  " +
-                    $"#{lastSeenPlate.rankings.minion_Rank.Data_Center} {lastSeenPlate.Data_Center}  " +
-                    $"#{lastSeenPlate.rankings.minion_Rank.Global} Global");
+                ImGui.TextUnformatted("Set to private.");
+            }
+            else if (Service.Configuration.ShowMinions)
+            {
+                
+                var minionrank = rankings?.minion_Rank;
+                ImGui.TextUnformatted($"#{minionrank?.Server} {lastSeenPlate.Server}  " +
+                    $"#{minionrank?.Data_Center} {lastSeenPlate.Data_Center}  " +
+                    $"#{minionrank?.Global} Global");
                 if (Service.Configuration.ShowPoints)
                 {
-                    int count = (Service.Configuration.ShowRanked ? lastSeenPlate.minions.Ranked_Count : lastSeenPlate.minions.Count) ?? default(int);
-                    int total = (Service.Configuration.ShowRanked ? lastSeenPlate.minions.Ranked_Total : lastSeenPlate.minions.Total) ?? default(int);
+                    int count = (Service.Configuration.ShowRanked ? minions.Ranked_Count : minions.Count) ?? default(int);
+                    int total = (Service.Configuration.ShowRanked ? minions.Ranked_Total : minions.Total) ?? default(int);
                     var percentage = (int)Math.Round((double)(100 * count) / total);
 
 
                     UIFunctions.DrawProgressBar((float)percentage / 100, width - 1, 20, $"{count}/{total} ({percentage}%)");
                 }
             }
+            
         }
     }
 
@@ -157,7 +180,6 @@ public class CharaCardWindow : Window, IDisposable
 
         var x = addon.X;
         var y = addon.Y;
-        var width = addon.ScaledWidth;
         var height = addon.ScaledHeight;
 
         this.Position = new Vector2(x, y + height + offsetY);

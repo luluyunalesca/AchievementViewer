@@ -9,11 +9,11 @@ namespace AchievementViewer;
 
 public class CharacterCache
 {
-    private List<Character> cachedChars = new List<Character>();
-    private Dictionary<(string, string), int> nameToIDMap = new Dictionary<(string, string), int>();
+    private List<Character> cachedChars = [];
+    private Dictionary<(string, string), int> nameToIDMap = [];
 
-    private short maxCacheSize = 24;
-    private short maxRequests = 24;
+    private readonly short maxCacheSize = 24;
+    private readonly short maxRequests = 24;
 
     public CharacterCache()
     {
@@ -58,8 +58,8 @@ public class CharacterCache
         {
             return new Character(-1, false, false);
         }
-        int id = GetID(name, server);
-        return cachedChars.Find(x => x.Id == id);
+        var id = GetID(name, server);
+        return cachedChars.Find(x => x.Id == id) ?? new Character(-1,false,false);
        
     }
 

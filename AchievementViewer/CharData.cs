@@ -87,7 +87,7 @@ public class CharData
         data = Change2ndOccurence(data, "achievements", "achievement_rank");
         data = Change2ndOccurence(data, "mounts", "mount_rank");
         data = Change2ndOccurence(data, "minions", "minion_rank");
-        Character character = JsonConvert.DeserializeObject<Character>(data);
+        Character character = JsonConvert.DeserializeObject<Character>(data) ?? new Character(-1,false,false);
         character.foundOnCollect = true;
         character.foundOnLodestone = true;
         return character;
@@ -125,7 +125,7 @@ public class CharData
                     World = server
                 });
 
-                if (!searchResponse.HasResults)
+                if (!(searchResponse?.HasResults ?? false))
                 {
                     int id = -2 - invalidLodestoneRequests;
 
@@ -139,7 +139,7 @@ public class CharData
                 var lodestoneCharacter =
                     searchResponse?.Results
                     .FirstOrDefault(entry => entry.Name == firstname + " " + surname);
-                string lodestoneId = lodestoneCharacter.Id;
+                string lodestoneId = lodestoneCharacter?.Id ?? "-1";
 
                 //If Lodestone id is known
                 await lodestoneClient.GetCharacter(lodestoneId);
@@ -169,7 +169,7 @@ public class CharData
 
         
         RemoveIDFromRequested(name, server);
-        return null;
+        return "-1";
     }
 
     //Request Achievements as a json from ffxivcollect pertaining to the LodestonedID id

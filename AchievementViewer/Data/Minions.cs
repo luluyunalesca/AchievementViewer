@@ -3,7 +3,6 @@ using System.Threading;
 
 namespace AchievementViewer.Data;
 
-
 public class Minions
 {
     public short? Count { get; set; }

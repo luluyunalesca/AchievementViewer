@@ -13,7 +13,7 @@ public sealed class AchievementViewer : IDalamudPlugin
 
     private const string CommandName = "/aviewer";
 
-    public readonly WindowSystem WindowSystem = new WindowSystem("AchievementViewer");
+    public readonly WindowSystem WindowSystem = new("AchievementViewer");
 
     public AchievementViewer(IDalamudPluginInterface PluginInterface)
     {
@@ -69,7 +69,7 @@ public sealed class AchievementViewer : IDalamudPlugin
     private void OnCommand(string command, string args)
     {
         // in response to the slash command, just toggle the display status of our main ui
-        
+
         ToggleConfigUI();
     }
 
@@ -86,7 +86,7 @@ public sealed class AchievementViewer : IDalamudPlugin
         Service.CharaCardWindow.IsOpen = false;
     }
 
-    public void ToggleConfigUI() => Service.ConfigWindow.Toggle();
+    public static void ToggleConfigUI() => Service.ConfigWindow.Toggle();
 
-    public void ToggleCharaCardUI() => Service.CharaCardWindow.Toggle();
+    public static void ToggleCharaCardUI() => Service.CharaCardWindow.Toggle();
 }
