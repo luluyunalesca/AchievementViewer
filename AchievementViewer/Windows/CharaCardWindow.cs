@@ -80,11 +80,11 @@ public class CharaCardWindow : Window, IDisposable
         {
             ImGui.TextUnformatted("Loading...");
             return;
-        } else if (!lastSeenPlate.foundOnLodestone) {
+        } else if (!lastSeenPlate.FoundOnLodestone) {
             ImGui.TextUnformatted("Character could not be found on The Lodestone");
             return;
         }
-        else if (!lastSeenPlate.foundOnCollect)
+        else if (!lastSeenPlate.FoundOnCollect)
         {
             ImGui.TextUnformatted("Character could not be found on FFXIVCollect");
             return;
@@ -95,16 +95,16 @@ public class CharaCardWindow : Window, IDisposable
             var addon = Service.GameGui.GetAddonByName("CharaCard", 1);
             var width = (int)(addon.ScaledWidth * 0.25);
 
-            var achievements = lastSeenPlate.achievements;
-            var rankings = lastSeenPlate.rankings;
-            var mounts = lastSeenPlate.mounts;
-            var minions = lastSeenPlate.minions;
+            var achievements = lastSeenPlate.Achievements;
+            var rankings = lastSeenPlate.Rankings;
+            var mounts = lastSeenPlate.Mounts;
+            var minions = lastSeenPlate.Minions;
             ImGui.TextUnformatted("Achievements");
             if (!(achievements?.Public ?? false)) { 
                 ImGui.TextUnformatted("Set to private.");
             } else if (Service.Configuration.ShowAchievements) {
 
-                var achievementrank = rankings?.achievement_Rank;
+                var achievementrank = rankings?.Achievement_Rank;
                 ImGui.TextUnformatted($"#{achievementrank?.Server} {lastSeenPlate.Server}  " +
                     $"#{achievementrank?.Data_Center} {lastSeenPlate.Data_Center}  " +
                     $"#{achievementrank?.Global} Global");
@@ -128,7 +128,7 @@ public class CharaCardWindow : Window, IDisposable
             else if (Service.Configuration.ShowMounts)
             {
                 
-                var mountrank = rankings?.mount_Rank;
+                var mountrank = rankings?.Mount_Rank;
                 ImGui.TextUnformatted($"#{mountrank?.Server} {lastSeenPlate.Server}  " +
                     $"#{mountrank?.Data_Center} {lastSeenPlate.Data_Center}  " +
                     $"#{mountrank?.Global} Global");
@@ -152,7 +152,7 @@ public class CharaCardWindow : Window, IDisposable
             else if (Service.Configuration.ShowMinions)
             {
                 
-                var minionrank = rankings?.minion_Rank;
+                var minionrank = rankings?.Minion_Rank;
                 ImGui.TextUnformatted($"#{minionrank?.Server} {lastSeenPlate.Server}  " +
                     $"#{minionrank?.Data_Center} {lastSeenPlate.Data_Center}  " +
                     $"#{minionrank?.Global} Global");

@@ -1,11 +1,14 @@
 using AchievementViewer.Data;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using NetStone;
 using NetStone.Search.Character;
 using Newtonsoft.Json;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading;
 using System.Threading.Tasks;
 using static Dalamud.Interface.Utility.Raii.ImRaii;
@@ -44,12 +47,15 @@ public class CharData
 
     public void RequestCharacter(string name, string server)
     {
+        Service.Log.Debug("Char Requested " + name + " " + server);
+
         Task.Run(async () =>
         {
             bool alreadyStored = Service.CharacterCache.IsAlreadyStored(name, server);
 
             if (alreadyStored)
             {
+                Service.Log.Debug("Char already Stored");
                 return;
             }
 
@@ -64,6 +70,7 @@ public class CharData
                 
                 if (ParseID(lodestoneID) == -1)
                 {
+                    Service.Log.Debug("Char not found on Lodestone");
                     return;
                 }
 
@@ -88,8 +95,8 @@ public class CharData
         data = Change2ndOccurence(data, "mounts", "mount_rank");
         data = Change2ndOccurence(data, "minions", "minion_rank");
         Character character = JsonConvert.DeserializeObject<Character>(data) ?? new Character(-1,false,false);
-        character.foundOnCollect = true;
-        character.foundOnLodestone = true;
+        character.FoundOnCollect = true;
+        character.FoundOnLodestone = true;
         return character;
     }
 
@@ -124,34 +131,55 @@ public class CharData
                     CharacterName = firstname + " " + surname,
                     World = server
                 });
+                Service.Log.Debug("" + searchResponse?.HasResults);
 
-                if (!(searchResponse?.HasResults ?? false))
+                if ((searchResponse?.HasResults ?? false))
                 {
-                    int id = -2 - invalidLodestoneRequests;
-
-                    Service.CharacterCache.AddToMapping(name, server, id);
-                    Service.CharacterCache.AddCharacterToCache(new Character(id, false, false));
-                    invalidLodestoneRequests++;
-                    RemoveIDFromRequested(name, server);
-                    return "-1";
-                }
-
-                var lodestoneCharacter =
+                    var lodestoneCharacter =
                     searchResponse?.Results
                     .FirstOrDefault(entry => entry.Name == firstname + " " + surname);
-                string lodestoneId = lodestoneCharacter?.Id ?? "-1";
+                    string lodestoneId = lodestoneCharacter?.Id ?? "-1";
 
-                //If Lodestone id is known
-                await lodestoneClient.GetCharacter(lodestoneId);
+                    //In case Name cant be found but lodestone still gives result for that search request
+                    //Could probably do this better but whatever
+                    if(lodestoneId == "-1")
+                    {
+                        int invalidId = -2 - invalidLodestoneRequests;
+
+                        Service.Log.Debug("Added to Mapping" + name + " " + server + " " + invalidId);
+                        Service.CharacterCache.AddToMapping(name, server, invalidId);
+                        Service.CharacterCache.AddCharacterToCache(new Character(invalidId, false, false));
+                        invalidLodestoneRequests++;
+                        RemoveIDFromRequested(name, server);
+                        return "-1";
+                    }
+
+                    //If Lodestone id is known
+                    await lodestoneClient.GetCharacter(lodestoneId);
+
+                    Service.Log.Debug("" + lodestoneId);
+                    Service.CharacterCache.AddToMapping(name, server, lodestoneId);
+                    //Temporary Addition to stop duplicate requests to Receive lodestone id
+                    Service.CharacterCache.AddCharacterToCache(new Character(ParseID(lodestoneId), false, true));
+
+                    RemoveIDFromRequested(name, server);
+
+                    return lodestoneId;
 
 
-                Service.CharacterCache.AddToMapping(name, server, lodestoneId);
-                //Temporary Addition to stop duplicate requests to Receice lodestone id
-                Service.CharacterCache.AddCharacterToCache(new Character(ParseID(lodestoneId), false, true));
+                    
+                }
 
+                int id = -2 - invalidLodestoneRequests;
+
+                Service.Log.Debug("Added to Mapping" + name + " " + server + " " + id);
+                Service.CharacterCache.AddToMapping(name, server, id);
+                Service.CharacterCache.AddCharacterToCache(new Character(id, false, false));
+                invalidLodestoneRequests++;
                 RemoveIDFromRequested(name, server);
-       
-                return lodestoneId;
+                return "-1";
+
+
             }
             catch (HttpRequestException e)
             {
